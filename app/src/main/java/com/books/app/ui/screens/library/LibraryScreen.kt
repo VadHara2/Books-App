@@ -1,6 +1,5 @@
 package com.books.app.ui.screens.library
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,14 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.books.app.data.model.Banner
 import com.books.app.data.model.Category
-import com.books.app.ui.theme.MyApplicationTheme
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import coil.compose.rememberAsyncImagePainter
@@ -48,6 +45,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.books.app.data.model.Book
+import com.books.app.data.model.BookId
 import com.books.app.data.model.ImageUrl
 import com.books.app.ui.theme.BackgroundBlack
 import com.books.app.ui.theme.AccentPink
@@ -56,9 +54,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import kotlinx.coroutines.delay
 
-private const val TAG = "LibraryScreen"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     modifier: Modifier = Modifier,
@@ -67,66 +63,121 @@ fun LibraryScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(state.navigationEvent) {
-        state.navigationEvent?.let { event ->
-            when (event) {
-                is LibraryState.NavigationEvent.NavigateToDetails -> {
-                    Log.d(TAG, "event.bookId: ${event.bookId}")
-                    navController.navigate("detailScreen/${event.bookId}")
-                    viewModel.handleIntent(LibraryIntent.ClearNavigation)
-                }
+    HandleNavigationEvent(
+        state.navigationEvent,
+        navController,
+        onClearNavigation = { viewModel.handleIntent(LibraryIntent.ClearNavigation) }
+    )
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            LibraryTopAppBar()
+        }
+    ) { innerPadding ->
+        LibraryContent(
+            modifier = modifier.padding(innerPadding),
+            state = state,
+            onBookClicked = { bookId ->
+                viewModel.handleIntent(LibraryIntent.BookClicked(bookId))
+            }
+        )
+    }
+}
+
+@Composable
+private fun HandleNavigationEvent(
+    navigationEvent: LibraryState.NavigationEvent?,
+    navController: NavController,
+    onClearNavigation: () -> Unit
+) {
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
+            if (event is LibraryState.NavigationEvent.NavigateToDetails) {
+                navController.navigate("detailScreen/${event.bookId}")
+                onClearNavigation()
             }
         }
     }
+}
 
-    Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
-        TopAppBar(title = {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LibraryTopAppBar() {
+    TopAppBar(
+        title = {
             Text(
                 text = "Library",
-                fontWeight = FontWeight(700),
+                fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
             )
-        }, actions = { }, colors = TopAppBarDefaults.largeTopAppBarColors(
+        },
+        actions = { },
+        colors = TopAppBarDefaults.largeTopAppBarColors(
             containerColor = BackgroundBlack,
             titleContentColor = AccentPink,
         )
-        )
-    }) { innerPadding ->
+    )
+}
 
-        Surface(
-            color = BackgroundBlack,
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-
-            if (state.isLoading) {
-                Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                Column(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(vertical = 16.dp)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    BannerWithIndicator(state.banners)
-                    state.categories.forEach { category ->
-                        CategoryRow(category)
-                    }
-                }
-            }
-
-
+@Composable
+fun LibraryContent(
+    modifier: Modifier = Modifier,
+    state: LibraryState,
+    onBookClicked: (BookId) -> Unit
+) {
+    Surface(
+        color = BackgroundBlack,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        if (state.isLoading) {
+            LoadingContent(modifier)
+        } else {
+            LoadedContent(state, onBookClicked)
         }
     }
+}
 
+@Composable
+fun LoadingContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun LoadedContent(
+    state: LibraryState,
+    onBookClicked: (BookId) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(vertical = 16.dp)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        BannerWithIndicator(
+            banners = state.banners,
+            onBookClicked = onBookClicked
+        )
+        state.categories.forEach { category ->
+            CategoryRow(
+                category = category,
+                onBookClicked = onBookClicked
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalPagerApi::class)
 @Composable
-fun BannerWithIndicator(banners: List<Banner>, viewModel: LibraryViewModel = hiltViewModel()) {
+fun BannerWithIndicator(
+    banners: List<Banner>,
+    onBookClicked: (BookId) -> Unit
+) {
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
     LaunchedEffect(key1 = true) {
@@ -148,15 +199,14 @@ fun BannerWithIndicator(banners: List<Banner>, viewModel: LibraryViewModel = hil
             BannerImage(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable {
-                        viewModel.handleIntent(LibraryIntent.BookClicked(banners[page].bookId))
-                    },
+                    .clickable { onBookClicked(banners[page].bookId) },
                 image = banners[page].cover
             )
         }
 
         HorizontalPagerIndicator(
-            pagerState = pagerState, pageCount = banners.size,
+            pagerState = pagerState,
+            pageCount = banners.size,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(8.dp),
@@ -167,7 +217,10 @@ fun BannerWithIndicator(banners: List<Banner>, viewModel: LibraryViewModel = hil
 }
 
 @Composable
-fun BannerImage(modifier: Modifier = Modifier, image: ImageUrl) {
+fun BannerImage(
+    modifier: Modifier = Modifier,
+    image: ImageUrl
+) {
     Image(
         painter = rememberAsyncImagePainter(image),
         contentDescription = null,
@@ -179,11 +232,10 @@ fun BannerImage(modifier: Modifier = Modifier, image: ImageUrl) {
     )
 }
 
-
 @Composable
 fun CategoryRow(
     category: Category,
-    viewModel: LibraryViewModel = hiltViewModel(),
+    onBookClicked: (BookId) -> Unit,
     headerColor: Color = Color.White,
     titlesColor: Color = Color.White.copy(alpha = 0.7f)
 ) {
@@ -196,7 +248,7 @@ fun CategoryRow(
             text = category.name,
             color = headerColor,
             modifier = Modifier.padding(16.dp),
-            fontWeight = FontWeight(700),
+            fontWeight = FontWeight.Bold,
             fontSize = 20.sp
         )
         LazyRow(
@@ -205,38 +257,48 @@ fun CategoryRow(
         ) {
             items(category.books.size) { index ->
                 val book = category.books[index]
-                Column(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .clickable {
-                            viewModel.handleIntent(LibraryIntent.BookClicked(book.id))
-                        }
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(book.coverUrl),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(120.dp, 150.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    Text(
-                        text = book.name,
-                        color = titlesColor,
-                        fontWeight = FontWeight(600),
-                        fontSize = 16.sp,
-                        modifier = Modifier
-                            .wrapContentHeight()
-                            .padding(top = 6.dp)
-                            .width(120.dp),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                BookItem(book, titlesColor) {
+                    onBookClicked(book.id)
                 }
             }
         }
     }
 }
+
+@Composable
+fun BookItem(
+    book: Book,
+    titlesColor: Color,
+    onBookClicked: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .wrapContentHeight()
+            .clickable { onBookClicked() }
+    ) {
+        Image(
+            painter = rememberAsyncImagePainter(book.coverUrl),
+            contentDescription = null,
+            modifier = Modifier
+                .size(120.dp, 150.dp)
+                .clip(RoundedCornerShape(16.dp)),
+            contentScale = ContentScale.Crop
+        )
+        Text(
+            text = book.name,
+            color = titlesColor,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .wrapContentHeight()
+                .padding(top = 6.dp)
+                .width(120.dp),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
 
 
 

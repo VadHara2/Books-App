@@ -1,17 +1,12 @@
 package com.books.app.ui.screens.splash
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +19,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,9 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.books.app.ui.screens.MainActivity
 
@@ -73,6 +62,7 @@ fun SplashScreen(modifier: Modifier = Modifier, viewModel: SplashViewModel) {
     LaunchedEffect(key1 = true) {
         delay(2000)
         context.startActivity(Intent(context, MainActivity::class.java))
+        (context as Activity).finish()
     }
 
     Box(
@@ -120,14 +110,6 @@ fun SplashScreen(modifier: Modifier = Modifier, viewModel: SplashViewModel) {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun SplashScreenPreview() {
-    MyApplicationTheme {
-//        SplashScreen()
-    }
-}
 
 
 

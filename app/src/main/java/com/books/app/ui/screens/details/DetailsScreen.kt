@@ -3,6 +3,7 @@ package com.books.app.ui.screens.details
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +16,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,10 +56,13 @@ import com.books.app.data.model.BookId
 import com.books.app.data.model.Category
 import com.books.app.data.model.ImageUrl
 import com.books.app.ui.screens.library.CategoryRow
+import com.books.app.ui.theme.LightPink
+import com.books.app.ui.theme.TextBlack
+import com.books.app.ui.theme.TextGrey
+import com.books.app.ui.theme.TextLight
 import kotlin.math.abs
 
 
-private const val TAG = "DetailsScreen"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -68,16 +73,15 @@ fun DetailsScreen(
     bookId: BookId
 ) {
     val state by viewModel.state.collectAsState()
-    viewModel.handleIntent(DetailsIntent.BookClicked(bookId))
+
+    LaunchedEffect(bookId) {
+        viewModel.handleIntent(DetailsIntent.BookClicked(bookId))
+    }
+
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
-        Image(
-            painter = painterResource(id = R.drawable.details_background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.FillWidth
-        )
+        DetailsBackground()
 
         Surface(
             color = Color.Transparent,
@@ -85,26 +89,43 @@ fun DetailsScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-
             if (state.isLoading) {
                 Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
-                val initialPage = state.allBooks.indexOfFirst { it.id == bookId }
+
+                val initialPage = remember(state.allBooks) {
+                    state.allBooks.indexOfFirst { it.id == bookId }
+                }
                 val pagerState = rememberPagerState(
                     pageCount = { state.allBooks.size },
                     initialPage = initialPage
                 )
+
+                LaunchedEffect(state.chosenBook) {
+                    val targetPage = state.allBooks.indexOfFirst { it.id == state.chosenBook.id }
+                    if (targetPage >= 0 && targetPage != pagerState.currentPage) {
+                        pagerState.animateScrollToPage(targetPage)
+                    }
+                }
+
+                LaunchedEffect(pagerState.currentPage) {
+                    if (state.allBooks.isNotEmpty()) {
+                        val currentBookId = state.allBooks[pagerState.currentPage].id
+                        viewModel.handleIntent(DetailsIntent.BookClicked(currentBookId))
+                    }
+                }
 
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
-
                     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
                     val pageSize = 200.dp
+
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     HorizontalPager(
                         state = pagerState,
@@ -114,11 +135,10 @@ fun DetailsScreen(
                             end = (screenWidth - pageSize) / 2
                         ),
                         pageSize = PageSize.Fixed(220.dp)
-
                     ) { page ->
-                        val pageOffset = calculatePageOffset(page, pagerState)
+                        val pageOffset =
+                            ((pagerState.currentPage - page).toFloat()).coerceIn(-1f, 1f)
                         val scale = lerp(0.8f, 1f, 1f - abs(pageOffset))
-
 
                         Box(
                             modifier = Modifier
@@ -128,30 +148,42 @@ fun DetailsScreen(
                         ) {
                             BookImage(url = state.allBooks[page].coverUrl)
                         }
-
-
                     }
 
                     BookDetailContent(book = state.chosenBook, recommended = state.recommendedBooks)
-
-                }
-
-                LaunchedEffect(pagerState.currentPage) {
-                    viewModel.handleIntent(DetailsIntent.BookClicked(state.allBooks[pagerState.currentPage].id))
                 }
             }
-
-
         }
-    }
 
+        Image(
+            painter = painterResource(id = R.drawable.arrow_back),
+            contentDescription = null,
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(16.dp)
+                .wrapContentSize()
+                .clickable { navController.popBackStack() }
+        )
+    }
 
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-private fun calculatePageOffset(page: Int, pagerState: PagerState): Float {
-    val pageOffset = (pagerState.currentPage - page).toFloat()
-    return pageOffset.coerceIn(-1f, 1f)
+@Composable
+fun DetailsBackground(modifier: Modifier = Modifier) {
+    Column {
+        Image(
+            painter = painterResource(id = R.drawable.details_background),
+            contentDescription = null,
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.FillWidth
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        )
+    }
 }
 
 @Composable
@@ -182,12 +214,12 @@ fun BookDetailContent(book: Book, recommended: List<Book>) {
         )
 
         Text(
-            text = book.author, color = Color.White.copy(alpha = 0.7f),
+            text = book.author,
+            color = Color.White.copy(alpha = 0.7f),
             fontWeight = FontWeight(600),
             fontSize = 15.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -213,12 +245,19 @@ fun BookDetailContent(book: Book, recommended: List<Book>) {
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(horizontal = 32.dp, vertical = 16.dp),
-
+            colors = ButtonColors(
+                containerColor = LightPink,
+                contentColor = Color.White,
+                disabledContentColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            )
         ) {
-            Text(text = "Read Now",
+            Text(
+                text = "Read Now",
                 fontWeight = FontWeight(800),
                 fontSize = 16.sp,
-                modifier = Modifier.padding(8.dp))
+                modifier = Modifier.padding(8.dp)
+            )
         }
     }
 }
@@ -228,17 +267,71 @@ fun ChipBox(modifier: Modifier = Modifier, info: String, title: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Text(
             text = info,
-            color = Color(0xFF0B080F),
+            color = TextBlack,
             fontWeight = FontWeight(700),
             fontSize = 18.sp,
         )
         Text(
             text = title,
-            color = Color(0xFFD9D5D6),
+            color = TextLight,
             fontWeight = FontWeight(600),
             fontSize = 12.sp
         )
     }
+}
+
+@Composable
+fun SummaryBox(modifier: Modifier = Modifier, text: String) {
+    Column(
+        modifier = modifier
+            .background(Color.White)
+            .padding(horizontal = 16.dp)
+    ) {
+        Divider()
+
+        Text(
+            text = "Summary",
+            fontWeight = FontWeight(700),
+            fontSize = 20.sp,
+            textAlign = TextAlign.Left,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            color = TextBlack
+        )
+
+        Text(
+            text = text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 16.dp),
+            fontWeight = FontWeight(600),
+            fontSize = 14.sp,
+            textAlign = TextAlign.Left,
+            color = TextGrey
+        )
+
+        Divider()
+    }
+}
+
+@Composable
+fun YouWillAlsoLike(
+    modifier: Modifier = Modifier,
+    books: List<Book>,
+    viewModel: DetailsViewModel = hiltViewModel()
+) {
+    CategoryRow(
+        category = Category(
+            name = "You will also like",
+            books = books
+        ),
+        headerColor = TextBlack,
+        titlesColor = TextGrey,
+        onBookClicked = {
+            viewModel.handleIntent(DetailsIntent.BookClicked(it))
+        }
+    )
 }
 
 @Composable
@@ -250,74 +343,9 @@ fun Divider(modifier: Modifier = Modifier) {
     ) {
         Box(
             modifier = Modifier
-                .background(Color(0xFFD9D5D6))
+                .background(TextLight)
                 .fillMaxWidth()
                 .height(1.dp)
         )
     }
-
 }
-
-
-@Composable
-fun SummaryBox(modifier: Modifier = Modifier, text: String) {
-    Column(
-        modifier = modifier
-            .background(Color.White)
-            .padding(horizontal = 16.dp)
-
-    ) {
-
-        Box(
-            modifier = Modifier
-                .background(Color(0xFFD9D5D6))
-                .fillMaxWidth()
-                .height(1.dp)
-                .padding(bottom = 16.dp)
-        )
-
-        Text(
-            text = "Summary",
-            fontWeight = FontWeight(700),
-            fontSize = 20.sp,
-            textAlign = TextAlign.Left,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-        )
-
-        Text(
-            text = text,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 16.dp),
-            fontWeight = FontWeight(600),
-            fontSize = 14.sp,
-            textAlign = TextAlign.Left,
-            color = Color(0xFF393637)
-        )
-
-        Box(
-            modifier = Modifier
-                .background(Color(0xFFD9D5D6))
-                .fillMaxWidth()
-                .height(1.dp)
-        )
-    }
-
-}
-
-
-@Composable
-fun YouWillAlsoLike(modifier: Modifier = Modifier, books: List<Book>) {
-    CategoryRow(
-        category = Category(
-            name = "You will also like",
-            books = books
-        ),
-        headerColor = Color(0xFF0B080F),
-        titlesColor = Color(0xFF393637)
-    )
-}
-
-
