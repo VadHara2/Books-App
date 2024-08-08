@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -229,10 +230,10 @@ fun BookDetailContent(book: Book, recommended: List<Book>) {
                 .background(Color.White)
                 .padding(vertical = 16.dp, horizontal = 32.dp)
         ) {
-            ChipBox(info = book.views, title = "Readers")
-            ChipBox(info = book.likes, title = "Likes")
-            ChipBox(info = book.quotes, title = "Quotes")
-            ChipBox(info = book.genre, title = "Genre")
+            ChipBox(info = book.views, title = stringResource(id = R.string.readers))
+            ChipBox(info = book.likes, title = stringResource(id = R.string.likes))
+            ChipBox(info = book.quotes, title = stringResource(id = R.string.quotes))
+            ChipBox(info = book.genre, title = stringResource(id = R.string.genre))
         }
 
         SummaryBox(text = book.summary)
@@ -253,7 +254,7 @@ fun BookDetailContent(book: Book, recommended: List<Book>) {
             )
         ) {
             Text(
-                text = "Read Now",
+                text = stringResource(id = R.string.read_now),
                 fontWeight = FontWeight(800),
                 fontSize = 16.sp,
                 modifier = Modifier.padding(8.dp)
@@ -290,7 +291,7 @@ fun SummaryBox(modifier: Modifier = Modifier, text: String) {
         Divider()
 
         Text(
-            text = "Summary",
+            text = stringResource(id = R.string.summary),
             fontWeight = FontWeight(700),
             fontSize = 20.sp,
             textAlign = TextAlign.Left,
@@ -323,7 +324,7 @@ fun YouWillAlsoLike(
 ) {
     CategoryRow(
         category = Category(
-            name = "You will also like",
+            name = stringResource(id = R.string.you_will_also_like),
             books = books
         ),
         headerColor = TextBlack,

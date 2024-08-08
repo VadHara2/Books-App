@@ -43,7 +43,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.books.app.R
 import com.books.app.data.model.Book
 import com.books.app.data.model.BookId
 import com.books.app.data.model.ImageUrl
@@ -107,7 +109,7 @@ fun LibraryTopAppBar() {
     TopAppBar(
         title = {
             Text(
-                text = "Library",
+                text = stringResource(id = R.string.library),
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
             )
