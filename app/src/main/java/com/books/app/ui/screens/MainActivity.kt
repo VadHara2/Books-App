@@ -28,18 +28,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 val navController = rememberNavController()
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = "libraryScreen"
-                    ) {
-                        composable("libraryScreen") {
-                            LibraryScreen(modifier = Modifier.padding(innerPadding), navController = navController)
-                        }
+                NavHost(
+                    navController = navController,
+                    startDestination = "libraryScreen"
+                ) {
+                    composable("libraryScreen") {
+                        LibraryScreen(navController = navController)
+                    }
 
-                        composable("detailScreen") {
-                            Text(text = "detailScreen")
-                        }
+                    composable("detailScreen") {
+                        Text(text = "detailScreen")
                     }
                 }
 

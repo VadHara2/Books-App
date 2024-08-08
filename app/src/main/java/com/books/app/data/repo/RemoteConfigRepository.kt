@@ -1,7 +1,9 @@
 package com.books.app.data.repo
 
 import android.util.Log
+import com.books.app.data.model.Banner
 import com.books.app.data.model.Book
+import com.books.app.data.model.Category
 import com.books.app.data.model.Root
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.gson.Gson
@@ -17,14 +19,25 @@ class RemoteConfigRepository @Inject constructor(
     private val remoteConfig: FirebaseRemoteConfig
 ) : IRemoteConfigRepository {
 
+    private fun root() = Gson().fromJson(remoteConfig.getString("json_data"), Root::class.java)
 
-    override fun getBooks(): List<Book> {
-        val root = Gson().fromJson(remoteConfig.getString("json_data"), Root::class.java)
-        return root.books
+    override fun getCategories(): List<Category> {
+        val allBooks = root().books
+        val categoryNames = allBooks.map { it.genre }.toSet()
+
+        val categories = categoryNames.toList().map { categoryName ->
+            Category(
+                name = categoryName,
+                books = allBooks.filter { book -> book.genre == categoryName }
+            )
+        }
+
+        return categories
     }
 
-    override fun getBanners() {
-        TODO("Not yet implemented")
+    override fun getBanners(): List<Banner> {
+
+        return root().banners
     }
 
     override suspend fun fetchAndActivate(): Boolean {
@@ -35,6 +48,5 @@ class RemoteConfigRepository @Inject constructor(
             false
         }
     }
-
 
 }

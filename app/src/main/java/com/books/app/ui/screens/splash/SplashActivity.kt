@@ -68,13 +68,10 @@ class SplashActivity : ComponentActivity() {
 
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier, viewModel: SplashViewModel) {
-    var currentProgress by remember { mutableFloatStateOf(0f) }
     val context = LocalContext.current
 
     LaunchedEffect(key1 = true) {
-        loadProgress(delay = 2000) {
-            currentProgress = it
-        }
+        delay(2000)
         context.startActivity(Intent(context, MainActivity::class.java))
     }
 
@@ -108,9 +105,7 @@ fun SplashScreen(modifier: Modifier = Modifier, viewModel: SplashViewModel) {
                 contentDescription = null
             )
 
-            // Використовую Determinate progress indicator, бо Indeterminate поломаний.
             LinearProgressIndicator(
-                progress = { currentProgress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(48.dp)
@@ -122,13 +117,6 @@ fun SplashScreen(modifier: Modifier = Modifier, viewModel: SplashViewModel) {
 
         }
 
-    }
-}
-
-private suspend fun loadProgress(delay: Long, updateProgress: (Float) -> Unit) {
-    for (i in 1..100) {
-        updateProgress(i.toFloat() / 100)
-        delay(delay / 100)
     }
 }
 

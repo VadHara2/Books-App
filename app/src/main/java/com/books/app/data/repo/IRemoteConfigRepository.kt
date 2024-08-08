@@ -1,12 +1,14 @@
 package com.books.app.data.repo
 
+import com.books.app.data.model.Banner
 import com.books.app.data.model.Book
+import com.books.app.data.model.Category
 
 interface IRemoteConfigRepository {
 
     suspend fun fetchAndActivate(): Boolean
 
-    fun getBooks(): List<Book>
+    fun getBanners(): List<Banner>
 
-    fun getBanners()
+    fun getCategories(): List<Category>
 }

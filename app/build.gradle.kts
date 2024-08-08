@@ -74,16 +74,26 @@ dependencies {
     // Hilt dependencies
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
-    // Optional for ViewModel injection
+    // Navigation dependencies
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     kapt(libs.androidx.lifecycle.compiler)
-
-    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // Gson dependencies
     implementation(libs.gson)
+
+    // UI dependencies
+    implementation(libs.coil.compose)
+    implementation(libs.ui)
+    implementation(libs.material3)
+    implementation(libs.androidx.foundation)
+    implementation(libs.ui.tooling.preview)
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators) 
+
 }
 
 kapt {
