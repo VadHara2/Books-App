@@ -1,5 +1,6 @@
 package com.books.app.ui.screens.library
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import kotlinx.coroutines.delay
 
+private const val TAG = "LibraryScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +67,17 @@ fun LibraryScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-
+    LaunchedEffect(state.navigationEvent) {
+        state.navigationEvent?.let { event ->
+            when (event) {
+                is LibraryState.NavigationEvent.NavigateToDetails -> {
+                    Log.d(TAG, "event.bookId: ${event.bookId}")
+                    navController.navigate("detailScreen/${event.bookId}")
+                    viewModel.handleIntent(LibraryIntent.ClearNavigation)
+                }
+            }
+        }
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         TopAppBar(title = {
@@ -114,7 +126,7 @@ fun LibraryScreen(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalPagerApi::class)
 @Composable
-fun BannerWithIndicator(banners: List<Banner>) {
+fun BannerWithIndicator(banners: List<Banner>, viewModel: LibraryViewModel = hiltViewModel()) {
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
     LaunchedEffect(key1 = true) {
@@ -134,7 +146,11 @@ fun BannerWithIndicator(banners: List<Banner>) {
             modifier = Modifier.fillMaxSize()
         ) { page ->
             BannerImage(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable {
+                        viewModel.handleIntent(LibraryIntent.BookClicked(banners[page].bookId))
+                    },
                 image = banners[page].cover
             )
         }
@@ -165,14 +181,23 @@ fun BannerImage(modifier: Modifier = Modifier, image: ImageUrl) {
 
 
 @Composable
-fun CategoryRow(category: Category) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+fun CategoryRow(
+    category: Category,
+    viewModel: LibraryViewModel = hiltViewModel(),
+    headerColor: Color = Color.White,
+    titlesColor: Color = Color.White.copy(alpha = 0.7f)
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
         Text(
             text = category.name,
-            color = Color.White,
+            color = headerColor,
             modifier = Modifier.padding(16.dp),
             fontWeight = FontWeight(700),
-            fontSize = 22.sp
+            fontSize = 20.sp
         )
         LazyRow(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -183,6 +208,9 @@ fun CategoryRow(category: Category) {
                 Column(
                     modifier = Modifier
                         .wrapContentHeight()
+                        .clickable {
+                            viewModel.handleIntent(LibraryIntent.BookClicked(book.id))
+                        }
                 ) {
                     Image(
                         painter = rememberAsyncImagePainter(book.coverUrl),
@@ -193,7 +221,8 @@ fun CategoryRow(category: Category) {
                         contentScale = ContentScale.Crop
                     )
                     Text(
-                        text = book.name, color = Color.White.copy(alpha = 0.7f),
+                        text = book.name,
+                        color = titlesColor,
                         fontWeight = FontWeight(600),
                         fontSize = 16.sp,
                         modifier = Modifier

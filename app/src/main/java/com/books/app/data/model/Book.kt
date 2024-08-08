@@ -6,14 +6,14 @@ typealias BookId = Int
 typealias ImageUrl = String
 
 data class Book(
-    val author: String,
+    val author: String = "",
     @SerializedName("cover_url")
-    val coverUrl: ImageUrl,
-    val genre: String,
-    val id: BookId,
-    val likes: String,
-    val name: String,
-    val quotes: String,
-    val summary: String,
-    val views: String
+    val coverUrl: ImageUrl = "",
+    val genre: String = "",
+    val id: BookId = 0,
+    val likes: String = "",
+    val name: String = "",
+    val quotes: String = "",
+    val summary: String = "",
+    val views: String = ""
 )

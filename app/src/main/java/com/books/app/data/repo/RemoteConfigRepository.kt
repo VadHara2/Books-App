@@ -3,6 +3,7 @@ package com.books.app.data.repo
 import android.util.Log
 import com.books.app.data.model.Banner
 import com.books.app.data.model.Book
+import com.books.app.data.model.BookId
 import com.books.app.data.model.Category
 import com.books.app.data.model.Root
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
@@ -49,4 +50,21 @@ class RemoteConfigRepository @Inject constructor(
         }
     }
 
+    override fun getBooksForDetailsCarousel(): List<Book> {
+        return root().books
+    }
+
+    override fun getRecommendations(): List<Book> {
+        val allBooks = root().books
+
+        return root().youWillLikeSection.map { recommendedId ->
+            allBooks.find { book -> book.id == recommendedId } ?: Book()
+        }
+    }
+
+    override fun getBookById(id: BookId): Book {
+        val allBooks = root().books
+
+        return allBooks.find { it.id == id } ?: Book()
+    }
 }

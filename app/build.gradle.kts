@@ -92,7 +92,8 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.ui.tooling.preview)
     implementation(libs.accompanist.pager)
-    implementation(libs.accompanist.pager.indicators) 
+    implementation(libs.accompanist.pager.indicators)
+
 
 }
 

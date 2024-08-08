@@ -1,5 +1,9 @@
 package com.books.app.ui.screens.library
 
-sealed class ScreenIntent {
-    data object LoadData : ScreenIntent()
+import com.books.app.data.model.BookId
+
+sealed class LibraryIntent {
+    data object LoadData : LibraryIntent()
+    data class BookClicked(val bookId: BookId) : LibraryIntent()
+    data object ClearNavigation: LibraryIntent()
 }
