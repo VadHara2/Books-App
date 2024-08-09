@@ -107,7 +107,7 @@ fun DetailsScreen(
                 LaunchedEffect(state.chosenBook) {
                     val targetPage = state.allBooks.indexOfFirst { it.id == state.chosenBook.id }
                     if (targetPage >= 0 && targetPage != pagerState.currentPage) {
-                        pagerState.animateScrollToPage(targetPage)
+                        pagerState.scrollToPage(targetPage)
                     }
                 }
 
@@ -178,12 +178,6 @@ fun DetailsBackground(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             contentScale = ContentScale.FillWidth
         )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        )
     }
 }
 
@@ -240,26 +234,8 @@ fun BookDetailContent(book: Book, recommended: List<Book>) {
 
         YouWillAlsoLike(books = recommended)
 
-        Button(
-            onClick = { },
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(horizontal = 32.dp, vertical = 16.dp),
-            colors = ButtonColors(
-                containerColor = LightPink,
-                contentColor = Color.White,
-                disabledContentColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent
-            )
-        ) {
-            Text(
-                text = stringResource(id = R.string.read_now),
-                fontWeight = FontWeight(800),
-                fontSize = 16.sp,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
+        ReadButton()
+
     }
 }
 
@@ -323,6 +299,7 @@ fun YouWillAlsoLike(
     viewModel: DetailsViewModel = hiltViewModel()
 ) {
     CategoryRow(
+        modifier = Modifier.background(Color.White),
         category = Category(
             name = stringResource(id = R.string.you_will_also_like),
             books = books
@@ -333,6 +310,32 @@ fun YouWillAlsoLike(
             viewModel.handleIntent(DetailsIntent.BookClicked(it))
         }
     )
+}
+
+@Composable
+fun ReadButton(modifier: Modifier = Modifier) {
+    Box(modifier = Modifier.background(Color.White).wrapContentSize()){
+        Button(
+            onClick = { },
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(horizontal = 32.dp, vertical = 16.dp),
+            colors = ButtonColors(
+                containerColor = LightPink,
+                contentColor = Color.White,
+                disabledContentColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            )
+        ) {
+            Text(
+                text = stringResource(id = R.string.read_now),
+                fontWeight = FontWeight(800),
+                fontSize = 16.sp,
+                modifier = Modifier.padding(8.dp)
+            )
+        }
+    }
 }
 
 @Composable

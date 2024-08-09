@@ -236,13 +236,14 @@ fun BannerImage(
 
 @Composable
 fun CategoryRow(
+    modifier: Modifier = Modifier,
     category: Category,
     onBookClicked: (BookId) -> Unit,
     headerColor: Color = Color.White,
     titlesColor: Color = Color.White.copy(alpha = 0.7f)
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
